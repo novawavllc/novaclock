@@ -59,8 +59,8 @@
     },
     "createUpdaterArtifacts": true,
     "longDescription": "A lightweight desktop widget that shows clocks for the time zones you choose.",
-    "publisher": "Nova Wave LLC",
-    "copyright": "\u00a9 2026 Nova Wave LLC",
+    "publisher": "Novawave LLC",
+    "copyright": "\u00a9 2026 Novawave LLC",
     "homepage": "https://github.com/novawavllc/novaclock"
   },
   "plugins": {
