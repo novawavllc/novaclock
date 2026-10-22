@@ -35,7 +35,7 @@ pub fn create(app: &AppHandle) -> tauri::Result<()> {
     app.manage(TrayItems { always_on_top, click_through, autostart, update });
 
     let mut builder = TrayIconBuilder::with_id("main")
-        .tooltip("World Clock")
+        .tooltip("NovaClock")
         .menu(&menu)
         .show_menu_on_left_click(!platform::TRAY_LEFT_CLICK_TOGGLES)
         .on_menu_event(|app, event| match event.id.as_ref() {

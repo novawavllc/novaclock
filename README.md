@@ -1,4 +1,4 @@
-# World Clock Widget
+# NovaClock - World Clock Windows Desktop Widget
 
 A lightweight desktop widget showing clocks for the time zones you choose. Built with **Tauri 2**
 (Rust + system webview) and vanilla TypeScript. Windows is the first target. The code is laid out
@@ -63,13 +63,16 @@ Installed copies update themselves from GitHub Releases
 - Every update is checked against the public key in `tauri.conf.json` before it installs, so only
   builds signed with the project's private key are accepted.
 
-**One-time setup.** Add the signing key as repository secrets (Settings → Secrets and variables →
-Actions):
+**One-time setup.** Add the signing key as a repository secret (Settings → Secrets and variables →
+Actions → New repository secret):
 
 | Secret | Value |
 |---|---|
 | `TAURI_SIGNING_PRIVATE_KEY` | Full contents of the private key file (`novaclock.key`) |
-| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | Empty (the key has no password) |
+
+The key has no password. Don't create `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`: GitHub doesn't allow
+empty secrets, and when it's missing the workflow passes an empty string, which is what this key
+needs.
 
 Back up the private key somewhere safe. If you lose it, installed copies can never be updated
 again, because they only trust that key.

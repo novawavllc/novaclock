@@ -75,7 +75,7 @@ pub fn show_settings(app: &AppHandle) -> tauri::Result<()> {
         return w.set_focus();
     }
     WebviewWindowBuilder::new(app, SETTINGS, WebviewUrl::App("settings.html".into()))
-        .title("World Clock Settings")
+        .title("NovaClock Settings")
         .inner_size(440.0, 680.0)
         .min_inner_size(360.0, 420.0)
         .center()
@@ -216,5 +216,5 @@ fn main() {
             }
         })
         .run(tauri::generate_context!())
-        .expect("error while running World Clock");
+        .expect("error while running NovaClock");
 }

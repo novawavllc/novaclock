@@ -1,7 +1,9 @@
 [package]
-name = "world-clock-widget"
+name = "novaclock"
 version = "0.1.0"
-description = "Lightweight desktop world clock widget"
+description = "NovaClock - World Clock Windows Desktop Widget"
+authors = ["Nova Wave LLC"]
+repository = "https://github.com/novawavllc/novaclock"
 edition = "2021"
 rust-version = "1.77"
 
