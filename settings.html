@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>World Clock Settings</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body class="settings">
+    <form id="settings-form" class="settings-form" autocomplete="off" onsubmit="return false">
+      <section>
+        <h2>Clocks <span id="clock-count" class="muted"></span></h2>
+        <label class="row local-row">
+          <input type="checkbox" name="showLocal" />
+          <span>Pin local time first <span id="local-tz" class="muted"></span></span>
+        </label>
+        <input type="text" name="localLabel" class="text" placeholder="Local" aria-label="Local clock label" />
+        <ul id="clock-list" class="clock-list"></ul>
+        <div class="tz-picker">
+          <input type="search" id="tz-search" class="text" placeholder="Add a time zone — search city, country or offset…" aria-label="Search time zones" />
+          <ul id="tz-results" class="tz-results" role="listbox"></ul>
+        </div>
+      </section>
+
+      <section>
+        <h2>Format</h2>
+        <div class="seg" role="radiogroup" aria-label="Hour format">
+          <label><input type="radio" name="hour12" value="false" /><span>24h</span></label>
+          <label><input type="radio" name="hour12" value="true" /><span>12h</span></label>
+        </div>
+        <label class="row"><input type="checkbox" name="showSeconds" /><span>Show seconds</span></label>
+        <label class="row"><input type="checkbox" name="showTimeZone" /><span>Show time zone (UTC offset and difference from local)</span></label>
+        <div class="field">
+          <span class="field-label">Date</span>
+          <div class="seg" role="radiogroup" aria-label="Show date">
+            <label><input type="radio" name="dateMode" value="off" /><span>Off</span></label>
+            <label title="Only when the date differs from your local date"><input type="radio" name="dateMode" value="auto" /><span>When different</span></label>
+            <label><input type="radio" name="dateMode" value="always" /><span>Always</span></label>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label" for="date-format">Date format</label>
+          <select id="date-format" name="dateFormat" class="text"></select>
+        </div>
+      </section>
+
+      <section>
+        <h2>Appearance</h2>
+        <div class="field">
+          <span class="field-label">Display</span>
+          <div class="seg" role="radiogroup" aria-label="Display mode">
+            <label><input type="radio" name="displayMode" value="analog" /><span>Analog</span></label>
+            <label><input type="radio" name="displayMode" value="digital" /><span>Digital</span></label>
+            <label><input type="radio" name="displayMode" value="both" /><span>Both</span></label>
+          </div>
+        </div>
+        <div class="field">
+          <span class="field-label">Size</span>
+          <div class="seg" role="radiogroup" aria-label="Clock size">
+            <label><input type="radio" name="size" value="s" /><span>S</span></label>
+            <label><input type="radio" name="size" value="m" /><span>M</span></label>
+            <label><input type="radio" name="size" value="l" /><span>L</span></label>
+          </div>
+        </div>
+        <div class="field">
+          <span class="field-label">Theme</span>
+          <div class="seg" role="radiogroup" aria-label="Theme">
+            <label><input type="radio" name="theme" value="light" /><span>Light</span></label>
+            <label><input type="radio" name="theme" value="dark" /><span>Dark</span></label>
+            <label><input type="radio" name="theme" value="system" /><span>System</span></label>
+          </div>
+        </div>
+        <div class="field">
+          <span class="field-label">Clock opacity <output id="clock-opacity-out"></output></span>
+          <input type="range" name="clockOpacity" min="20" max="100" step="1" aria-label="Clock opacity" />
+        </div>
+        <label class="row"><input type="checkbox" name="showBackground" /><span>Show background</span></label>
+        <div class="field" id="bg-opacity-field">
+          <span class="field-label">Background opacity <output id="opacity-out"></output></span>
+          <input type="range" name="opacity" min="50" max="100" step="1" aria-label="Background opacity" />
+        </div>
+      </section>
+
+      <section>
+        <h2>Window</h2>
+        <label class="row"><input type="checkbox" name="alwaysOnTop" /><span>Always on top</span></label>
+        <label class="row"><input type="checkbox" name="clickThrough" /><span>Click-through (mouse passes through the widget)</span></label>
+        <p class="hint" id="click-through-hint" hidden>While click-through is on, the widget can't be dragged or right-clicked. Turn it off here or from the tray icon menu.</p>
+        <label class="row"><input type="checkbox" name="autostart" /><span id="autostart-label">Start with system</span></label>
+      </section>
+
+      <section>
+        <h2>Updates <span id="app-version" class="muted"></span></h2>
+        <label class="row"><input type="checkbox" name="autoUpdate" /><span>Check for updates automatically</span></label>
+        <div class="update-row">
+          <button type="button" id="btn-check-update" class="btn">Check now</button>
+          <button type="button" id="btn-install-update" class="btn primary" hidden>Install and restart</button>
+          <span id="update-status" class="muted small" role="status"></span>
+        </div>
+        <p id="update-notes" class="hint update-notes" hidden></p>
+      </section>
+    </form>
+    <script type="module" src="/src/settings.ts"></script>
+  </body>
+</html>

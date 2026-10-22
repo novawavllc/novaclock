@@ -1,0 +1,49 @@
+# Builds, signs and publishes a release when a version tag is pushed:
+#   1. bump "version" in package.json (the app reads its version from there)
+#   2. git tag v0.2.0 && git push origin v0.2.0
+# The release is created as a draft. Publishing it is what rolls the update out:
+# installed apps poll .../releases/latest/download/latest.json, which only sees published releases.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - run: npm ci
+
+      - run: npm test
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Updater signing key (contents of novaclock.key). Repo → Settings → Secrets → Actions.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: v__VERSION__
+          releaseName: World Clock v__VERSION__
+          releaseBody: See the commits since the last release for what changed.
+          releaseDraft: true
+          prerelease: false
+          includeUpdaterJson: true
