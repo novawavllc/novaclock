@@ -17,6 +17,14 @@ export interface ClockModel {
   isLocal: boolean;
 }
 
+/** What to draw inside the analog face instead of below it. */
+export interface DialPlacement {
+  /** Date and time zone chips. */
+  info: boolean;
+  /** Location label. */
+  label: boolean;
+}
+
 /** Values computed once per tick and shared by every clock. */
 export interface TickContext {
   now: Date;
@@ -39,9 +47,12 @@ function buildTicks(): string {
 }
 const TICKS = buildTicks();
 
-const FACE = `
+const DIAL = `
   <circle class="dial" cx="50" cy="50" r="47"/>
-  <g class="ticks">${TICKS}</g>
+  <g class="ticks">${TICKS}</g>`;
+
+// Hands get their own layer above the dial so in-dial date/zone text sits underneath them.
+const HANDS = `
   <line class="hand hour" x1="50" y1="54" x2="50" y2="27"/>
   <line class="hand minute" x1="50" y1="56" x2="50" y2="14"/>`;
 
@@ -71,24 +82,27 @@ export class ClockView {
   // Last-written values, so a tick only touches the DOM when something changed.
   private last: Record<string, string> = {};
 
-  constructor(private readonly model: ClockModel) {
+  constructor(
+    private readonly model: ClockModel,
+    inDial: DialPlacement = { info: false, label: false },
+  ) {
     this.root = el('article', 'clock');
     if (model.isLocal) this.root.classList.add('local');
 
     const layer = (cls: string, markup: string) => {
       const svg = document.createElementNS(SVG_NS, 'svg');
       svg.setAttribute('class', cls);
+      svg.setAttribute('aria-hidden', 'true');
       svg.setAttribute('viewBox', '0 0 100 100');
       svg.innerHTML = markup;
       return svg;
     };
     const face = el('div', 'face');
-    face.setAttribute('aria-hidden', 'true');
-    const dial = layer('face-dial', FACE);
+    const dial = layer('face-dial', DIAL);
+    const hands = layer('face-hands', HANDS);
     this.secondHand = layer('face-second', SECOND);
-    face.append(dial, this.secondHand);
-    this.hourHand = dial.querySelector('.hour')!;
-    this.minuteHand = dial.querySelector('.minute')!;
+    this.hourHand = hands.querySelector('.hour')!;
+    this.minuteHand = hands.querySelector('.minute')!;
 
     const info = el('div', 'info');
     const label = el('div', 'label');
@@ -108,7 +122,24 @@ export class ClockView {
     chips.append(this.utcChip);
     if (!model.isLocal) chips.append(this.relChip);
 
-    info.append(label, time, this.dateEl, chips);
+    // Above the pivot: label, then zone; below it: date. Whatever isn't in the dial stays in .info.
+    const top = el('div', 'dial-info top');
+    const bottom = el('div', 'dial-info bottom');
+    if (inDial.label) top.append(label);
+    else info.append(label);
+    info.append(time);
+    if (inDial.info) {
+      top.append(chips);
+      bottom.append(this.dateEl);
+    } else {
+      info.append(this.dateEl, chips);
+    }
+    // With the label also up top, the zone chips go on one row to leave it room.
+    top.classList.toggle('with-label', inDial.label);
+    face.append(dial);
+    if (top.hasChildNodes()) face.append(top);
+    if (bottom.hasChildNodes()) face.append(bottom);
+    face.append(hands, this.secondHand);
     this.root.append(face, info);
   }
 

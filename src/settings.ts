@@ -36,6 +36,7 @@ const results = document.getElementById('tz-results') as HTMLUListElement;
 const countEl = document.getElementById('clock-count')!;
 const opacityOut = document.getElementById('opacity-out')!;
 const clockOpacityOut = document.getElementById('clock-opacity-out')!;
+const spacingOut = document.getElementById('spacing-out')!;
 const dateFormatSelect = document.getElementById('date-format') as HTMLSelectElement;
 
 let settings: Settings;
@@ -69,9 +70,16 @@ function populateForm(): void {
   (input('hour12') as RadioNodeList).value = String(settings.hour12);
   (input('showSeconds') as HTMLInputElement).checked = settings.showSeconds;
   (input('showTimeZone') as HTMLInputElement).checked = settings.showTimeZone;
+  (input('infoInDial') as HTMLInputElement).checked = settings.infoInDial;
+  (input('labelInDial') as HTMLInputElement).checked = settings.labelInDial;
   (input('dateMode') as RadioNodeList).value = settings.dateMode;
   dateFormatSelect.value = settings.dateFormat;
   (input('displayMode') as RadioNodeList).value = settings.displayMode;
+  (input('layout') as RadioNodeList).value = settings.layout;
+  (input('tableFill') as RadioNodeList).value = settings.tableFill;
+  (input('tablePerLine') as HTMLInputElement).value = String(settings.tablePerLine);
+  (input('spacing') as HTMLInputElement).value = String(settings.spacing);
+  spacingOut.textContent = `${settings.spacing}px`;
   (input('size') as RadioNodeList).value = settings.size;
   (input('theme') as RadioNodeList).value = settings.theme;
   (input('clockOpacity') as HTMLInputElement).value = String(Math.round(settings.clockOpacity * 100));
@@ -90,6 +98,13 @@ function populateForm(): void {
 function syncDependentFields(): void {
   document.getElementById('bg-opacity-field')!.classList.toggle('disabled', !settings.showBackground);
   dateFormatSelect.closest('.field')!.classList.toggle('disabled', settings.dateMode === 'off');
+  document
+    .getElementById('info-in-dial-row')!
+    .classList.toggle('disabled', settings.displayMode === 'digital' || (settings.dateMode === 'off' && !settings.showTimeZone));
+  document.getElementById('table-fields')!.classList.toggle('disabled', settings.layout !== 'table');
+  document.getElementById('table-per-line-label')!.textContent =
+    settings.tableFill === 'columns' ? 'Clocks per column' : 'Clocks per row';
+  document.getElementById('label-in-dial-row')!.classList.toggle('disabled', settings.displayMode === 'digital');
   document.getElementById('click-through-hint')!.hidden = !settings.clickThrough;
 }
 
@@ -125,6 +140,8 @@ form.addEventListener('input', (e) => {
       break;
     case 'showSeconds':
     case 'showTimeZone':
+    case 'infoInDial':
+    case 'labelInDial':
     case 'showBackground':
       settings[t.name] = t.checked;
       break;
@@ -140,6 +157,23 @@ form.addEventListener('input', (e) => {
       break;
     case 'displayMode':
       settings.displayMode = t.value as Settings['displayMode'];
+      break;
+    case 'layout':
+      settings.layout = t.value as Settings['layout'];
+      break;
+    case 'tableFill':
+      settings.tableFill = t.value as Settings['tableFill'];
+      break;
+    case 'tablePerLine': {
+      const n = Math.round(Number(t.value));
+      // Ignore the transient empty/out-of-range values while the user is typing.
+      if (!t.value || !Number.isFinite(n) || n < 1 || n > MAX_CLOCKS) return;
+      settings.tablePerLine = n;
+      break;
+    }
+    case 'spacing':
+      settings.spacing = Number(t.value);
+      spacingOut.textContent = `${t.value}px`;
       break;
     case 'size':
       settings.size = t.value as Settings['size'];
@@ -402,6 +436,46 @@ results.addEventListener('keydown', (e) => {
   e.preventDefault();
 });
 
+// --- Tabs --------------------------------------------------------------------
+
+const tabs = [...document.querySelectorAll<HTMLButtonElement>('.tabs [role="tab"]')];
+const TAB_KEY = 'settings-tab';
+
+function selectTab(tab: HTMLButtonElement, focus = false): void {
+  for (const t of tabs) {
+    const active = t === tab;
+    t.setAttribute('aria-selected', String(active));
+    t.tabIndex = active ? 0 : -1;
+    document.getElementById(t.getAttribute('aria-controls')!)!.hidden = !active;
+  }
+  if (focus) tab.focus();
+  window.scrollTo(0, 0);
+  try {
+    localStorage.setItem(TAB_KEY, tab.id);
+  } catch {
+    // Storage unavailable: the window just opens on the first tab next time.
+  }
+}
+
+for (const t of tabs) t.addEventListener('click', () => selectTab(t));
+document.querySelector('.tabs')!.addEventListener('keydown', (e) => {
+  const ev = e as KeyboardEvent;
+  const i = tabs.indexOf(document.activeElement as HTMLButtonElement);
+  if (i < 0) return;
+  const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[ev.key];
+  if (next === undefined) return;
+  ev.preventDefault();
+  selectTab(tabs[(next + tabs.length) % tabs.length], true);
+});
+
+let savedTab: string | null = null;
+try {
+  savedTab = localStorage.getItem(TAB_KEY);
+} catch {
+  // Ignore; fall back to the first tab.
+}
+selectTab(tabs.find((t) => t.id === savedTab) ?? tabs[0]);
+
 // --- Updates -----------------------------------------------------------------
 
 const checkBtn = document.getElementById('btn-check-update') as HTMLButtonElement;
@@ -415,6 +489,7 @@ function renderUpdate(s: UpdateStatus): void {
   installBtn.hidden = s.state !== 'available';
   installBtn.disabled = busy;
   updateNotesEl.hidden = true;
+  document.getElementById('tab-updates')!.classList.toggle('has-update', s.state === 'available');
 
   switch (s.state) {
     case 'idle':

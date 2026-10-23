@@ -6,17 +6,19 @@ so Linux and macOS builds need little extra work.
 
 ## Features
 
-- 1–12 clocks in a responsive grid that wraps as you resize the window
+- 1–12 clocks in a responsive grid that wraps as you resize the window, or a fixed layout:
+  one row, one column, or a table with a set number of clocks per row or per column
 - Analog SVG face with a smooth second hand, digital time, or both
 - 12h/24h and optional seconds
 - Date line: off, only when the zone's date differs from yours, or always, in six formats
 - Day/night tint per zone (06:00–18:00 counts as day)
 - Optional time zone chips: UTC offset and offset relative to local time (`UTC+5:30`, `+13h`)
+- Location, date and time zone can each sit below the clock or inside the analog dial
 - Optional pinned local clock
 - Searchable time zone picker (by city, country or offset), drag-to-reorder, custom labels
-- Light / dark / system theme, S/M/L sizes
+- Light / dark / system theme, S/M/L sizes, adjustable spacing between clocks
 - Separate opacity controls for the clocks and the background, and the background can be turned off
-- The window always wraps the clocks exactly. Drag it wider or narrower to change the number of
+- The window always wraps the clocks exactly. In Auto layout, drag it wider or narrower to change the number of
   columns, and it snaps to fit.
 - Click-through mode: mouse clicks pass through the widget to whatever is behind it
 - Frameless transparent window you drag from anywhere, hidden from the taskbar by default

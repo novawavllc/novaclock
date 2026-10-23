@@ -37,7 +37,10 @@ function render(): void {
   if (settings.showLocal) {
     models.unshift({ tz: local, label: settings.localLabel.trim() || `Local · ${cityFromTimeZone(local)}`, isLocal: true });
   }
-  views = models.map((m) => new ClockView(m));
+  // The dial only exists in analog/both mode; in digital mode everything stays below the time.
+  const hasDial = settings.displayMode !== 'digital';
+  const inDial = { info: settings.infoInDial && hasDial, label: settings.labelInDial && hasDial };
+  views = models.map((m) => new ClockView(m, inDial));
   grid.replaceChildren(...views.map((v) => v.root));
   if (views.length === 0) {
     const empty = document.createElement('p');
@@ -50,8 +53,9 @@ function render(): void {
 }
 
 // --- Fit window to content ----------------------------------------------------
-// The window is always sized to exactly wrap the clocks. The user picks the layout by
-// resizing: the width they drag to decides the column count, then the window snaps to fit.
+// The window is always sized to exactly wrap the clocks. In 'auto' layout the user picks the
+// column count by resizing: the width they drag to decides it, then the window snaps to fit.
+// The other layouts fix the shape, so a drag just snaps back.
 
 const shell = document.getElementById('widget')!;
 let fitTarget: { w: number; h: number } | null = null;
@@ -68,9 +72,30 @@ function columnsFor(width: number): number {
   return Math.max(1, Math.min(fit, Math.max(views.length, 1)));
 }
 
-/** Recompute columns from the current window width, then snap the window to the content. */
+/** Grid shape for the chosen layout. `rows` is set only when the grid fills column by column. */
+function gridShape(): { cols: number; rows?: number } {
+  const n = Math.max(views.length, 1);
+  switch (settings.layout) {
+    case 'horizontal':
+      return { cols: n };
+    case 'vertical':
+      return { cols: 1 };
+    case 'table': {
+      const per = Math.min(settings.tablePerLine, n);
+      if (settings.tableFill === 'rows') return { cols: per };
+      return { cols: Math.ceil(n / per), rows: per };
+    }
+    default:
+      return { cols: columnsFor(window.innerWidth) };
+  }
+}
+
+/** Recompute the grid shape (from the current window width in 'auto'), then snap the window to the content. */
 function layout(): void {
-  grid.style.setProperty('--cols', String(columnsFor(window.innerWidth)));
+  const { cols, rows } = gridShape();
+  grid.style.setProperty('--cols', String(cols));
+  grid.classList.toggle('flow-column', rows !== undefined);
+  if (rows !== undefined) grid.style.setProperty('--rows', String(rows));
   fit();
 }
 

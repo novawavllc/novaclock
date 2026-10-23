@@ -7,8 +7,15 @@
     <link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body class="settings">
+    <nav class="tabs" role="tablist" aria-label="Settings sections">
+      <button type="button" role="tab" id="tab-clocks" aria-controls="panel-clocks">Clocks</button>
+      <button type="button" role="tab" id="tab-format" aria-controls="panel-format">Format</button>
+      <button type="button" role="tab" id="tab-appearance" aria-controls="panel-appearance">Appearance</button>
+      <button type="button" role="tab" id="tab-window" aria-controls="panel-window">Window</button>
+      <button type="button" role="tab" id="tab-updates" aria-controls="panel-updates">Updates</button>
+    </nav>
     <form id="settings-form" class="settings-form" autocomplete="off" onsubmit="return false">
-      <section>
+      <section id="panel-clocks" role="tabpanel" aria-labelledby="tab-clocks">
         <h2>Clocks <span id="clock-count" class="muted"></span></h2>
         <label class="row local-row">
           <input type="checkbox" name="showLocal" />
@@ -22,7 +29,7 @@
         </div>
       </section>
 
-      <section>
+      <section id="panel-format" role="tabpanel" aria-labelledby="tab-format">
         <h2>Format</h2>
         <div class="seg" role="radiogroup" aria-label="Hour format">
           <label><input type="radio" name="hour12" value="false" /><span>24h</span></label>
@@ -42,9 +49,11 @@
           <label class="field-label" for="date-format">Date format</label>
           <select id="date-format" name="dateFormat" class="text"></select>
         </div>
+        <label class="row" id="info-in-dial-row"><input type="checkbox" name="infoInDial" /><span>Show date and time zone inside the analog dial</span></label>
+        <label class="row" id="label-in-dial-row"><input type="checkbox" name="labelInDial" /><span>Show location inside the analog dial</span></label>
       </section>
 
-      <section>
+      <section id="panel-appearance" role="tabpanel" aria-labelledby="tab-appearance">
         <h2>Appearance</h2>
         <div class="field">
           <span class="field-label">Display</span>
@@ -53,6 +62,32 @@
             <label><input type="radio" name="displayMode" value="digital" /><span>Digital</span></label>
             <label><input type="radio" name="displayMode" value="both" /><span>Both</span></label>
           </div>
+        </div>
+        <div class="field">
+          <span class="field-label">Layout</span>
+          <div class="seg" role="radiogroup" aria-label="Layout">
+            <label title="Drag the window wider or narrower to change the number of columns"><input type="radio" name="layout" value="auto" /><span>Auto</span></label>
+            <label><input type="radio" name="layout" value="horizontal" /><span>Horizontal</span></label>
+            <label><input type="radio" name="layout" value="vertical" /><span>Vertical</span></label>
+            <label><input type="radio" name="layout" value="table" /><span>Table</span></label>
+          </div>
+        </div>
+        <div class="field-row" id="table-fields">
+          <div class="field">
+            <span class="field-label">Fill by</span>
+            <div class="seg" role="radiogroup" aria-label="Table fill order">
+              <label><input type="radio" name="tableFill" value="rows" /><span>Rows</span></label>
+              <label><input type="radio" name="tableFill" value="columns" /><span>Columns</span></label>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label" for="table-per-line" id="table-per-line-label">Clocks per row</label>
+            <input type="number" id="table-per-line" name="tablePerLine" class="text num" min="1" max="12" step="1" />
+          </div>
+        </div>
+        <div class="field">
+          <span class="field-label">Spacing between clocks <output id="spacing-out"></output></span>
+          <input type="range" name="spacing" min="0" max="40" step="1" aria-label="Spacing between clocks" />
         </div>
         <div class="field">
           <span class="field-label">Size</span>
@@ -81,7 +116,7 @@
         </div>
       </section>
 
-      <section>
+      <section id="panel-window" role="tabpanel" aria-labelledby="tab-window">
         <h2>Window</h2>
         <label class="row"><input type="checkbox" name="alwaysOnTop" /><span>Always on top</span></label>
         <label class="row"><input type="checkbox" name="clickThrough" /><span>Click-through (mouse passes through the widget)</span></label>
@@ -89,7 +124,7 @@
         <label class="row"><input type="checkbox" name="autostart" /><span id="autostart-label">Start with system</span></label>
       </section>
 
-      <section>
+      <section id="panel-updates" role="tabpanel" aria-labelledby="tab-updates">
         <h2>Updates <span id="app-version" class="muted"></span></h2>
         <label class="row"><input type="checkbox" name="autoUpdate" /><span>Check for updates automatically</span></label>
         <div class="update-row">

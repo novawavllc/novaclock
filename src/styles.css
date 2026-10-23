@@ -116,10 +116,12 @@ body.widget {
 .clock-grid {
   display: grid;
   grid-template-columns: repeat(var(--cols, 3), var(--card-w));
-  gap: 6px;
+  gap: var(--clock-gap, 6px);
   padding: 14px 10px 10px;
   opacity: var(--clock-alpha, 1);
 }
+/* Table layout filled column by column. */
+.clock-grid.flow-column { grid-auto-flow: column; grid-template-rows: repeat(var(--rows), auto); }
 
 .empty { color: var(--muted); text-align: center; grid-column: 1 / -1; margin: 1.5rem 0; width: 200px; }
 
@@ -151,6 +153,40 @@ body.widget {
 .clock.night .dial { fill: var(--night-dial); stroke: rgb(255 255 255 / 0.12); }
 .clock.night .tick { stroke: var(--night-tick); }
 .clock.night .hand.hour, .clock.night .hand.minute { stroke: var(--night-ink); }
+
+/* Label and zone drawn inside the dial above the pivot, date below it. */
+.dial-info {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 64%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: max(7px, calc(var(--face) * 0.08));
+  line-height: 1.15;
+  text-align: center;
+  pointer-events: none;
+}
+.dial-info.top { bottom: 58%; }
+.dial-info.bottom { top: 60%; }
+.clock.day .dial-info { --dial-ink: var(--day-ink); --dial-accent: #2f6fdb; }
+.clock.night .dial-info { --dial-ink: var(--night-ink); --dial-accent: #6aa8ff; }
+.dial-info { color: color-mix(in srgb, var(--dial-ink) 70%, transparent); }
+.dial-info .chips { flex-direction: column; align-items: center; gap: 0; flex-wrap: nowrap; }
+.dial-info.with-label .chips { flex-direction: row; gap: 0 0.4em; flex-wrap: wrap; justify-content: center; }
+.dial-info .label { font-size: 1.15em; color: var(--dial-ink); }
+.dial-info .chip { font-size: 1em; padding: 0; background: none !important; color: inherit; }
+.dial-info .date {
+  font-size: 1em;
+  color: inherit;
+  white-space: normal;
+  /* Long formats wrap onto a second line rather than overflowing the dial. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.clock.other-day .dial-info .date { color: var(--dial-accent); }
 
 .info { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; max-width: 100%; }
 .label {
@@ -208,6 +244,48 @@ body.settings {
   overflow-y: auto;
 }
 
+.tabs {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  gap: 2px;
+  padding: 10px 12px 0;
+  background: rgb(var(--bg-rgb));
+  /* Drawn as a shadow, not a border, so the active underline can cover it without overflowing. */
+  box-shadow: inset 0 -1px 0 var(--border);
+  /* Still scrolls sideways if the window is made very narrow, just without a visible bar. */
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button {
+  position: relative;
+  padding: 7px 8px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tabs button:hover { color: var(--text); }
+.tabs button[aria-selected='true'] { color: var(--text); border-bottom-color: var(--accent); }
+.tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 6px 6px 0 0; }
+/* Dot on the Updates tab when an update is ready. */
+.tabs button.has-update::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  right: 3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
 .settings-form { padding: 16px 18px 24px; display: flex; flex-direction: column; gap: 18px; }
 .settings-form section { display: flex; flex-direction: column; gap: 10px; }
 .settings-form h2 {
@@ -230,7 +308,9 @@ body.settings {
 .field-label { font-size: 0.85rem; }
 input[type='range'] { width: 100%; accent-color: var(--accent); }
 select.text { cursor: pointer; }
-.field.disabled { opacity: 0.45; pointer-events: none; }
+.field-row { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+.text.num { width: 72px; }
+.field.disabled, .row.disabled, .field-row.disabled { opacity: 0.45; pointer-events: none; }
 .hint { margin: -4px 0 0 24px; font-size: 0.78rem; color: var(--muted); }
 
 .update-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }

@@ -7,6 +7,10 @@ import { isValidTimeZone, cityFromTimeZone, DATE_FORMATS, type DateFormat } from
 export type DisplayMode = 'analog' | 'digital' | 'both';
 export type ClockSize = 's' | 'm' | 'l';
 export type Theme = 'light' | 'dark' | 'system';
+/** 'auto' = columns follow the window width the user drags to. */
+export type Layout = 'auto' | 'horizontal' | 'vertical' | 'table';
+/** Table fill order: rows first (count = clocks per row) or columns first (count = clocks per column). */
+export type TableFill = 'rows' | 'columns';
 /** 'auto' = only when the zone's date differs from the local date. */
 export type DateMode = 'off' | 'auto' | 'always';
 
@@ -28,7 +32,17 @@ export interface Settings {
   dateFormat: DateFormat;
   /** UTC-offset and relative-to-local chips. */
   showTimeZone: boolean;
+  /** Draw the date and time zone inside the analog dial instead of below the clock. */
+  infoInDial: boolean;
+  /** Draw the location label inside the analog dial instead of below it. */
+  labelInDial: boolean;
   displayMode: DisplayMode;
+  layout: Layout;
+  tableFill: TableFill;
+  /** Clocks per row (or per column, when filling by columns) in table layout. */
+  tablePerLine: number;
+  /** Gap between clocks in px, 0–40. */
+  spacing: number;
   size: ClockSize;
   theme: Theme;
   showBackground: boolean;
@@ -67,7 +81,13 @@ export function defaultSettings(): Settings {
     dateMode: 'auto',
     dateFormat: 'short',
     showTimeZone: true,
+    infoInDial: false,
+    labelInDial: false,
     displayMode: 'both',
+    layout: 'auto',
+    tableFill: 'rows',
+    tablePerLine: 3,
+    spacing: 6,
     size: 'm',
     theme: 'dark',
     showBackground: true,
@@ -121,7 +141,13 @@ export function normalize(raw: unknown): Settings {
     dateMode: pick(r.dateMode, ['off', 'auto', 'always'], d.dateMode),
     dateFormat: pick(r.dateFormat, DATE_FORMATS, d.dateFormat),
     showTimeZone: bool(r.showTimeZone, d.showTimeZone),
+    infoInDial: bool(r.infoInDial, d.infoInDial),
+    labelInDial: bool(r.labelInDial, d.labelInDial),
     displayMode: pick(r.displayMode, ['analog', 'digital', 'both'], d.displayMode),
+    layout: pick(r.layout, ['auto', 'horizontal', 'vertical', 'table'], d.layout),
+    tableFill: pick(r.tableFill, ['rows', 'columns'], d.tableFill),
+    tablePerLine: Math.round(range(r.tablePerLine, 1, MAX_CLOCKS, d.tablePerLine)),
+    spacing: Math.round(range(r.spacing, 0, 40, d.spacing)),
     size: pick(r.size, ['s', 'm', 'l'], d.size),
     theme: pick(r.theme, ['light', 'dark', 'system'], d.theme),
     showBackground: bool(r.showBackground, d.showBackground),
@@ -215,6 +241,7 @@ export function applyAppearance(s: Settings, root: HTMLElement = document.docume
   root.dataset.mode = s.displayMode;
   root.style.setProperty('--bg-alpha', String(s.opacity));
   root.style.setProperty('--clock-alpha', String(s.clockOpacity));
+  root.style.setProperty('--clock-gap', `${s.spacing}px`);
   root.classList.toggle('no-seconds', !s.showSeconds);
   root.classList.toggle('no-bg', !s.showBackground);
   root.classList.toggle('no-tz', !s.showTimeZone);
