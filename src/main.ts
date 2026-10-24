@@ -4,6 +4,7 @@ import { LogicalSize } from '@tauri-apps/api/dpi';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { ClockView, type TickContext } from './clock.ts';
+import { configureDock, dockArea, dockEdge, pauseDock, place } from './dock.ts';
 import {
   applyAppearance,
   applyNativePrefs,
@@ -30,7 +31,7 @@ let rafId = 0;
 /** Tracked separately from document.visibilityState, which WebView2 doesn't update on hide. */
 let windowShown = true;
 
-function render(): void {
+async function render(): Promise<void> {
   applyAppearance(settings);
   const local = localTimeZone();
   const models = settings.clocks.map((c) => ({ tz: c.tz, label: clockLabel(c), isLocal: false }));
@@ -50,12 +51,19 @@ function render(): void {
   }
   restart();
   layout();
+  // Docking needs to know the screen first, so it lays out again once that's resolved.
+  await applyDock();
+  layout();
+}
+
+function applyDock(): Promise<void> {
+  return configureDock(settings.dock === 'off' ? null : settings.dock, settings.dockAutoHide, settings.clickThrough);
 }
 
 // --- Fit window to content ----------------------------------------------------
 // The window is always sized to exactly wrap the clocks. In 'auto' layout the user picks the
 // column count by resizing: the width they drag to decides it, then the window snaps to fit.
-// The other layouts fix the shape, so a drag just snaps back.
+// The other layouts fix the shape, so a drag just snaps back. Docked, the edge decides the shape.
 
 const shell = document.getElementById('widget')!;
 let fitTarget: { w: number; h: number } | null = null;
@@ -63,18 +71,47 @@ let userResizeTimer: number | undefined;
 
 const px = (v: string) => parseFloat(v) || 0;
 
+/**
+ * Columns are as wide as the widest clock's content (capped at the size's --card-w), so a
+ * dial with nothing wider below it isn't padded out with empty space.
+ */
+function measureColumns(): void {
+  grid.classList.add('measuring');
+  const w = Math.max(0, ...views.map((v) => v.root.getBoundingClientRect().width));
+  grid.classList.remove('measuring');
+  if (w > 0) grid.style.setProperty('--col-w', `${Math.ceil(w)}px`);
+  else grid.style.removeProperty('--col-w');
+}
+
+/** How many items of `item` px fit in `space` px with `gap` between them. */
+const countFitting = (space: number, item: number, gap: number) => Math.floor((space + gap) / (item + gap));
+
 function columnsFor(width: number): number {
   const gs = getComputedStyle(grid);
-  const card = px(getComputedStyle(document.documentElement).getPropertyValue('--card-w'));
-  const gap = px(gs.columnGap);
+  const col =
+    px(grid.style.getPropertyValue('--col-w')) || px(getComputedStyle(document.documentElement).getPropertyValue('--card-w'));
   const chrome = px(gs.paddingLeft) + px(gs.paddingRight) + 2; // + shell border
-  const fit = Math.floor((width - chrome + gap) / (card + gap));
+  const fit = countFitting(width - chrome, col, px(gs.columnGap));
   return Math.max(1, Math.min(fit, Math.max(views.length, 1)));
+}
+
+/** Docked: one row along the top/bottom edge, one column along the sides, wrapping only if the screen is too small. */
+function dockShape(n: number): { cols: number; rows?: number } {
+  const area = dockArea();
+  const edge = dockEdge();
+  if (edge === 'top' || edge === 'bottom') return { cols: area ? columnsFor(area.w) : n };
+  if (!area) return { cols: 1 };
+  const gs = getComputedStyle(grid);
+  const cardH = Math.max(1, ...views.map((v) => v.root.getBoundingClientRect().height));
+  const chrome = px(gs.paddingTop) + px(gs.paddingBottom) + 2;
+  const perCol = Math.max(1, countFitting(area.h - chrome, cardH, px(gs.rowGap)));
+  return perCol >= n ? { cols: 1 } : { cols: Math.ceil(n / perCol), rows: perCol };
 }
 
 /** Grid shape for the chosen layout. `rows` is set only when the grid fills column by column. */
 function gridShape(): { cols: number; rows?: number } {
   const n = Math.max(views.length, 1);
+  if (dockEdge()) return dockShape(n);
   switch (settings.layout) {
     case 'horizontal':
       return { cols: n };
@@ -92,6 +129,7 @@ function gridShape(): { cols: number; rows?: number } {
 
 /** Recompute the grid shape (from the current window width in 'auto'), then snap the window to the content. */
 function layout(): void {
+  measureColumns();
   const { cols, rows } = gridShape();
   grid.style.setProperty('--cols', String(cols));
   grid.classList.toggle('flow-column', rows !== undefined);
@@ -103,12 +141,15 @@ function fit(): void {
   const r = shell.getBoundingClientRect();
   const w = Math.ceil(r.width);
   const h = Math.ceil(r.height);
+  if (dockEdge()) return place(w, h);
   if (Math.abs(w - window.innerWidth) <= 1 && Math.abs(h - window.innerHeight) <= 1) return;
   fitTarget = { w, h };
   void appWindow.setSize(new LogicalSize(w, h));
 }
 
 window.addEventListener('resize', () => {
+  // Docked, dock.ts sizes and places the window (including shrinking it to a strip when hidden).
+  if (dockEdge()) return;
   // Ignore the resize we caused ourselves.
   if (fitTarget && Math.abs(window.innerWidth - fitTarget.w) <= 2 && Math.abs(window.innerHeight - fitTarget.h) <= 2) {
     return;
@@ -131,7 +172,8 @@ new ResizeObserver(() => {
 // One timer re-aligned to the next second boundary every tick (drift-corrected),
 // and an rAF loop for the smooth second hand only while it is actually visible.
 
-function tick(): void {
+/** Returns true if text that can change a clock's width (date, zone chips) changed. */
+function tick(): boolean {
   const now = new Date();
   const local = localTimeZone();
   const ctx: TickContext = {
@@ -142,12 +184,15 @@ function tick(): void {
     dateMode: settings.dateMode,
     dateFormat: settings.dateFormat,
   };
-  for (const v of views) v.tick(ctx);
+  let resized = false;
+  for (const v of views) resized = v.tick(ctx) || resized;
+  return resized;
 }
 
 function scheduleTick(): void {
   tickTimer = window.setTimeout(() => {
-    tick();
+    // E.g. a date line appearing at midnight may be wider than the current columns.
+    if (tick()) layout();
     scheduleTick();
   }, 1000 - (Date.now() % 1000));
 }
@@ -212,7 +257,7 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => appl
 
 async function boot(): Promise<void> {
   settings = await loadSettings();
-  render();
+  await render();
   await appWindow.show();
 
   const settingsBtn = document.getElementById('btn-settings')!;
@@ -226,16 +271,18 @@ async function boot(): Promise<void> {
 
   await listen<boolean>('widget-visibility', (e) => {
     windowShown = e.payload;
+    pauseDock(!windowShown);
     restart();
   });
 
   await onSettingsChanged('main', (s) => {
     settings = s;
-    render();
+    void render();
   });
 
   await onTrayPrefsChanged(async (p) => {
     settings = { ...settings, ...p };
+    void applyDock();
     await saveSettings(settings);
     await broadcast('main', settings);
   });

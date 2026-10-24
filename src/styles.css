@@ -113,15 +113,58 @@ body.widget {
 .toolbar button:hover { color: var(--text); background: var(--border); }
 .toolbar svg { width: 100%; height: 100%; fill: currentColor; display: block; }
 
+/* --col-w is measured by main.ts: the widest clock's content, at most --card-w. */
 .clock-grid {
   display: grid;
-  grid-template-columns: repeat(var(--cols, 3), var(--card-w));
+  grid-template-columns: repeat(var(--cols, 3), var(--col-w, var(--card-w)));
   gap: var(--clock-gap, 6px);
   padding: 14px 10px 10px;
   opacity: var(--clock-alpha, 1);
 }
 /* Table layout filled column by column. */
 .clock-grid.flow-column { grid-auto-flow: column; grid-template-rows: repeat(var(--rows), auto); }
+.clock-grid.measuring { grid-template-columns: repeat(var(--cols, 3), max-content); }
+.clock-grid.measuring .clock { max-width: var(--card-w); }
+
+/* ---------- Docked to a screen edge ---------- */
+/* Square off the corners that touch the edge. */
+:root[data-dock='top'] .widget-shell { border-top-left-radius: 0; border-top-right-radius: 0; }
+:root[data-dock='bottom'] .widget-shell { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+:root[data-dock='left'] .widget-shell { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+:root[data-dock='right'] .widget-shell { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+
+/* Auto-hide: the clocks slide off towards the edge, leaving a small tab (dock.ts, SLIDE_MS). */
+:root[data-dock] .widget-shell { transition: transform 0.18s ease, opacity 0.18s ease; }
+:root.dock-hidden .widget-shell { opacity: 0; }
+:root.dock-hidden[data-dock='top'] .widget-shell { transform: translateY(-100%); }
+:root.dock-hidden[data-dock='bottom'] .widget-shell { transform: translateY(100%); }
+:root.dock-hidden[data-dock='left'] .widget-shell { transform: translateX(-100%); }
+:root.dock-hidden[data-dock='right'] .widget-shell { transform: translateX(100%); }
+
+/* The tab left on the edge while hidden; its size matches TAB_LEN × TAB_THICK in dock.ts. */
+.dock-handle {
+  display: none;
+  position: fixed;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  opacity: 0.85;
+}
+:root.dock-hidden .dock-handle { display: flex; }
+:root[data-dock='top'] .dock-handle,
+:root[data-dock='bottom'] .dock-handle { left: 50%; width: 92px; max-width: 100%; height: 20px; transform: translateX(-50%); }
+:root[data-dock='left'] .dock-handle,
+:root[data-dock='right'] .dock-handle { top: 50%; height: 92px; max-height: 100%; width: 20px; transform: translateY(-50%); writing-mode: vertical-rl; }
+:root[data-dock='top'] .dock-handle { top: 0; border-radius: 0 0 6px 6px; }
+:root[data-dock='bottom'] .dock-handle { bottom: 0; border-radius: 6px 6px 0 0; }
+/* Reads bottom-to-top on the left edge, top-to-bottom on the right. */
+:root[data-dock='left'] .dock-handle { left: 0; border-radius: 6px 0 0 6px; rotate: 180deg; }
+:root[data-dock='right'] .dock-handle { right: 0; border-radius: 6px 0 0 6px; }
 
 .empty { color: var(--muted); text-align: center; grid-column: 1 / -1; margin: 1.5rem 0; width: 200px; }
 
@@ -130,7 +173,7 @@ body.widget {
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  padding: 6px 4px;
+  padding: 6px 0;
   min-width: 0;
 }
 

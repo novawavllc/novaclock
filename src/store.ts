@@ -13,6 +13,9 @@ export type Layout = 'auto' | 'horizontal' | 'vertical' | 'table';
 export type TableFill = 'rows' | 'columns';
 /** 'auto' = only when the zone's date differs from the local date. */
 export type DateMode = 'off' | 'auto' | 'always';
+export type DockEdge = 'left' | 'right' | 'top' | 'bottom';
+/** 'off' = free-floating widget; otherwise pinned to that edge of its screen. */
+export type Dock = 'off' | DockEdge;
 
 export interface ClockEntry {
   id: string;
@@ -53,6 +56,9 @@ export interface Settings {
   alwaysOnTop: boolean;
   /** Mouse clicks pass through the widget to whatever is behind it. */
   clickThrough: boolean;
+  dock: Dock;
+  /** While docked, slide out of view until the pointer touches the edge. */
+  dockAutoHide: boolean;
   autostart: boolean;
   /** Check GitHub Releases for new versions in the background. */
   autoUpdate: boolean;
@@ -95,6 +101,8 @@ export function defaultSettings(): Settings {
     clockOpacity: 1,
     alwaysOnTop: false,
     clickThrough: false,
+    dock: 'off',
+    dockAutoHide: false,
     autostart: false,
     autoUpdate: true,
   };
@@ -155,6 +163,8 @@ export function normalize(raw: unknown): Settings {
     clockOpacity: range(r.clockOpacity, 0.2, 1, d.clockOpacity),
     alwaysOnTop: bool(r.alwaysOnTop, d.alwaysOnTop),
     clickThrough: bool(r.clickThrough, d.clickThrough),
+    dock: pick(r.dock, ['off', 'left', 'right', 'top', 'bottom'], d.dock),
+    dockAutoHide: bool(r.dockAutoHide, d.dockAutoHide),
     autostart: bool(r.autostart, d.autostart),
     autoUpdate: bool(r.autoUpdate, d.autoUpdate),
   };

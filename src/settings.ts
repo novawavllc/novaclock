@@ -89,6 +89,8 @@ function populateForm(): void {
   opacityOut.textContent = `${Math.round(settings.opacity * 100)}%`;
   (input('alwaysOnTop') as HTMLInputElement).checked = settings.alwaysOnTop;
   (input('clickThrough') as HTMLInputElement).checked = settings.clickThrough;
+  (input('dock') as RadioNodeList).value = settings.dock;
+  (input('dockAutoHide') as HTMLInputElement).checked = settings.dockAutoHide;
   (input('autostart') as HTMLInputElement).checked = settings.autostart;
   (input('autoUpdate') as HTMLInputElement).checked = settings.autoUpdate;
   syncDependentFields();
@@ -101,7 +103,11 @@ function syncDependentFields(): void {
   document
     .getElementById('info-in-dial-row')!
     .classList.toggle('disabled', settings.displayMode === 'digital' || (settings.dateMode === 'off' && !settings.showTimeZone));
-  document.getElementById('table-fields')!.classList.toggle('disabled', settings.layout !== 'table');
+  const docked = settings.dock !== 'off';
+  document.getElementById('layout-field')!.classList.toggle('disabled', docked);
+  document.getElementById('table-fields')!.classList.toggle('disabled', docked || settings.layout !== 'table');
+  document.getElementById('dock-auto-hide-row')!.classList.toggle('disabled', !docked);
+  document.getElementById('dock-hint')!.hidden = !docked;
   document.getElementById('table-per-line-label')!.textContent =
     settings.tableFill === 'columns' ? 'Clocks per column' : 'Clocks per row';
   document.getElementById('label-in-dial-row')!.classList.toggle('disabled', settings.displayMode === 'digital');
@@ -184,6 +190,20 @@ form.addEventListener('input', (e) => {
     case 'opacity':
       settings.opacity = Number(t.value) / 100;
       opacityOut.textContent = `${t.value}%`;
+      break;
+    case 'dock':
+      settings.dock = t.value as Settings['dock'];
+      break;
+    case 'dockAutoHide':
+      settings.dockAutoHide = t.checked;
+      // The edge strip is useless if other windows can cover it.
+      if (t.checked && !settings.alwaysOnTop) {
+        settings.alwaysOnTop = true;
+        (input('alwaysOnTop') as HTMLInputElement).checked = true;
+        syncDependentFields();
+        commit(true);
+        return;
+      }
       break;
     case 'alwaysOnTop':
     case 'clickThrough':

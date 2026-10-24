@@ -63,7 +63,7 @@
             <label><input type="radio" name="displayMode" value="both" /><span>Both</span></label>
           </div>
         </div>
-        <div class="field">
+        <div class="field" id="layout-field">
           <span class="field-label">Layout</span>
           <div class="seg" role="radiogroup" aria-label="Layout">
             <label title="Drag the window wider or narrower to change the number of columns"><input type="radio" name="layout" value="auto" /><span>Auto</span></label>
@@ -121,6 +121,18 @@
         <label class="row"><input type="checkbox" name="alwaysOnTop" /><span>Always on top</span></label>
         <label class="row"><input type="checkbox" name="clickThrough" /><span>Click-through (mouse passes through the widget)</span></label>
         <p class="hint" id="click-through-hint" hidden>While click-through is on, the widget can't be dragged or right-clicked. Turn it off here or from the tray icon menu.</p>
+        <div class="field">
+          <span class="field-label">Dock to screen edge</span>
+          <div class="seg" role="radiogroup" aria-label="Dock position">
+            <label><input type="radio" name="dock" value="off" /><span>Off</span></label>
+            <label><input type="radio" name="dock" value="left" /><span>Left</span></label>
+            <label><input type="radio" name="dock" value="right" /><span>Right</span></label>
+            <label><input type="radio" name="dock" value="top" /><span>Top</span></label>
+            <label><input type="radio" name="dock" value="bottom" /><span>Bottom</span></label>
+          </div>
+        </div>
+        <label class="row" id="dock-auto-hide-row"><input type="checkbox" name="dockAutoHide" /><span>Auto-hide (slides back out when the pointer touches the edge)</span></label>
+        <p class="hint" id="dock-hint" hidden>Docked clocks line up along the edge, replacing the Layout setting. Drag the widget to another screen to dock it there.</p>
         <label class="row"><input type="checkbox" name="autostart" /><span id="autostart-label">Start with system</span></label>
       </section>
 

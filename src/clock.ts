@@ -143,21 +143,26 @@ export class ClockView {
     this.root.append(face, info);
   }
 
-  private set(key: string, value: string, apply: () => void): void {
-    if (this.last[key] === value) return;
+  private set(key: string, value: string, apply: () => void): boolean {
+    if (this.last[key] === value) return false;
     this.last[key] = value;
     apply();
+    return true;
   }
 
-  /** Once-per-second update: digital text, date, chips, day/night, hour + minute hands. */
-  tick(ctx: TickContext): void {
+  /**
+   * Once-per-second update: digital text, date, chips, day/night, hour + minute hands.
+   * Returns true if text that can change the clock's width changed.
+   */
+  tick(ctx: TickContext): boolean {
+    let resized = false;
     const { tz } = this.model;
     const t = zonedTime(tz, ctx.now);
     const f = formatTime(t, ctx.hour12);
 
     this.set('hm', f.hm, () => (this.hmEl.textContent = f.hm));
     this.set('sec', f.sec, () => (this.secEl.textContent = ':' + f.sec));
-    this.set('suffix', f.suffix, () => (this.suffixEl.textContent = f.suffix));
+    resized = this.set('suffix', f.suffix, () => (this.suffixEl.textContent = f.suffix)) || resized;
 
     const day = isDaytime(t) ? 'day' : 'night';
     this.set('dn', day, () => {
@@ -168,25 +173,27 @@ export class ClockView {
     const differs = dayKey(t) !== ctx.localDay;
     const showDate = ctx.dateMode === 'always' || (ctx.dateMode === 'auto' && differs);
     const dateText = showDate ? formatDate(tz, ctx.now, ctx.dateFormat) : '';
-    this.set('date', dateText, () => {
-      this.dateEl.textContent = dateText;
-      this.dateEl.title = dateText; // full text if a long format gets truncated
-      this.dateEl.hidden = !showDate;
-    });
+    resized =
+      this.set('date', dateText, () => {
+        this.dateEl.textContent = dateText;
+        this.dateEl.title = dateText; // full text if a long format gets truncated
+        this.dateEl.hidden = !showDate;
+      }) || resized;
     this.set('differs', String(differs), () => this.root.classList.toggle('other-day', differs));
 
     const off = offsetMinutes(tz, ctx.now);
     const utc = formatUtcOffset(off);
-    this.set('utc', utc, () => (this.utcChip.textContent = utc));
+    resized = this.set('utc', utc, () => (this.utcChip.textContent = utc)) || resized;
     if (!this.model.isLocal) {
       const rel = formatRelative(off - ctx.localOffset);
-      this.set('rel', rel, () => (this.relChip.textContent = rel));
+      resized = this.set('rel', rel, () => (this.relChip.textContent = rel)) || resized;
     }
 
     const minuteAngle = (t.minute + t.second / 60) * 6;
     const hourAngle = ((t.hour % 12) + t.minute / 60 + t.second / 3600) * 30;
     this.hourHand.setAttribute('transform', `rotate(${hourAngle.toFixed(2)} 50 50)`);
     this.minuteHand.setAttribute('transform', `rotate(${minuteAngle.toFixed(2)} 50 50)`);
+    return resized;
   }
 
   /** Smooth second hand. Angle is identical for every zone (offsets are whole minutes). */
