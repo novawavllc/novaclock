@@ -3,12 +3,15 @@
   color-scheme: dark;
   --bg-rgb: 20 22 28;
   --bg-alpha: 0.9;
+  /* Brand colours, shared with the app icon. */
+  --brand: #fd791e;
+  --brand-deep: #d14a1d;
   --surface: #23262f;
   --surface-2: #2c303b;
   --border: rgb(255 255 255 / 0.1);
   --text: #eceef3;
   --muted: #9aa1b2;
-  --accent: #6aa8ff;
+  --accent: var(--brand);
   --danger: #ff6b6b;
   --chip-bg: rgb(255 255 255 / 0.08);
   --halo: rgb(0 0 0 / 0.85);
@@ -39,7 +42,7 @@
   --border: rgb(0 0 0 / 0.1);
   --text: #1d2028;
   --muted: #687082;
-  --accent: #2f6fdb;
+  --accent: var(--brand-deep);
   --chip-bg: rgb(0 0 0 / 0.06);
   --halo: rgb(255 255 255 / 0.9);
 }
@@ -53,7 +56,7 @@
     --border: rgb(0 0 0 / 0.1);
     --text: #1d2028;
     --muted: #687082;
-    --accent: #2f6fdb;
+    --accent: var(--brand-deep);
     --chip-bg: rgb(0 0 0 / 0.06);
     --halo: rgb(255 255 255 / 0.9);
   }
@@ -147,7 +150,7 @@ body.widget {
   position: fixed;
   align-items: center;
   justify-content: center;
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--brand), var(--brand-deep));
   color: #fff;
   font-size: 11px;
   font-weight: 600;
@@ -213,8 +216,8 @@ body.widget {
 }
 .dial-info.top { bottom: 58%; }
 .dial-info.bottom { top: 60%; }
-.clock.day .dial-info { --dial-ink: var(--day-ink); --dial-accent: #2f6fdb; }
-.clock.night .dial-info { --dial-ink: var(--night-ink); --dial-accent: #6aa8ff; }
+.clock.day .dial-info { --dial-ink: var(--day-ink); --dial-accent: var(--brand-deep); }
+.clock.night .dial-info { --dial-ink: var(--night-ink); --dial-accent: var(--brand); }
 .dial-info { color: color-mix(in srgb, var(--dial-ink) 70%, transparent); }
 .dial-info .chips { flex-direction: column; align-items: center; gap: 0; flex-wrap: nowrap; }
 .dial-info.with-label .chips { flex-direction: row; gap: 0 0.4em; flex-wrap: wrap; justify-content: center; }

@@ -1,5 +1,5 @@
 // Docking: pins the widget to an edge of its screen and, with auto-hide, slides it out of
-// view until the pointer touches that edge (like an auto-hiding taskbar).
+// view until the pointer hovers the "World Clock" tab left on that edge.
 //
 // Hiding shrinks the window to a small labelled tab on the edge rather than moving it off-screen,
 // because off-screen on one monitor can be on-screen on the next one over.
@@ -16,8 +16,6 @@ import type { DockEdge } from './store.ts';
 const appWindow = getCurrentWindow();
 const root = document.documentElement;
 
-/** Logical px along the edge that bring the widget back while hidden. */
-const STRIP = 5;
 /** Logical size of the "World Clock" tab left on screen while hidden (matches .dock-handle). */
 const TAB_LEN = 92;
 const TAB_THICK = 20;
@@ -183,28 +181,13 @@ function reveal(): void {
   });
 }
 
-/** The strip along the edge, the full length of the shown widget, that brings it back. */
-function handleRect(): Rect {
-  const r = shownRect() ?? win;
-  const s = Math.round(STRIP * (monitor?.scaleFactor ?? 1));
-  switch (edge) {
-    case 'top':
-      return { ...r, h: s };
-    case 'bottom':
-      return { ...r, y: r.y + r.h - s, h: s };
-    case 'left':
-      return { ...r, w: s };
-    default:
-      return { ...r, x: r.x + r.w - s, w: s };
-  }
-}
-
 async function poll(): Promise<void> {
   pollTimer = undefined;
   try {
     const c = await cursorPosition();
     if (hidden) {
-      if (inside(c.x, c.y, win) || inside(c.x, c.y, handleRect(), 1)) reveal();
+      // While hidden the window *is* the tab, so only hovering it brings the widget back.
+      if (inside(c.x, c.y, win, 1)) reveal();
     } else if (inside(c.x, c.y, win, 4)) {
       awaySince = 0;
     } else if (!awaySince) {

@@ -57,7 +57,7 @@ export interface Settings {
   /** Mouse clicks pass through the widget to whatever is behind it. */
   clickThrough: boolean;
   dock: Dock;
-  /** While docked, slide out of view until the pointer touches the edge. */
+  /** While docked, slide out of view until the pointer hovers the tab left on the edge. */
   dockAutoHide: boolean;
   autostart: boolean;
   /** Check GitHub Releases for new versions in the background. */
